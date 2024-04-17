@@ -1,12 +1,13 @@
 import sys
 import os
 import streamlit as st
-sys.path.append(os.path.abspath('../../'))
+
+sys.path.append(os.path.abspath("../../"))
 from tasks.task_3.task_3 import DocumentProcessor
 from tasks.task_4.task_4 import EmbeddingClient
 from tasks.task_5.task_5 import ChromaCollectionCreator
 
-f"""
+"""
 Task: Build a Quiz Builder with Streamlit and LangChain
 
 Overview:
@@ -36,50 +37,69 @@ Implementation Guidance:
 - Post form submission, verify that the documents have been processed and that a Chroma collection has been successfully created. The build-in methods will communicate the outcome of these operations to the user through appropriate feedback.
 
 - Lastly, introduce a query input field post-Chroma collection creation. This field will gather user queries for generating quiz questions, showcasing the utility of the Chroma collection in sourcing information relevant to the quiz topic.
-
 """
 
 if __name__ == "__main__":
-    st.header("Quizzify")
+    # st.header("Quizzify")
 
     # Configuration for EmbeddingClient
     embed_config = {
         "model_name": "textembedding-gecko@003",
-        "project": "YOUR PROJECT ID HERE",
-        "location": "us-central1"
+        "project": os.environ.get("project_id"),
+        "location": "us-east1",
     }
-    
-    screen = st.empty() # Screen 1, ingest documents
+
+    screen = st.empty()  # Screen 1, ingest documents
     with screen.container():
         st.header("Quizzify")
         ####### YOUR CODE HERE #######
         # 1) Initalize DocumentProcessor and Ingest Documents from Task 3
         # 2) Initalize the EmbeddingClient from Task 4 with embed config
         # 3) Initialize the ChromaCollectionCreator from Task 5
+        processor = DocumentProcessor()
+        processor.ingest_documents()
+        embed_client = EmbeddingClient(**embed_config)  # Initialize from Task 4
+        # print(processor)
+        chroma_creator = ChromaCollectionCreator(processor, embed_client)
         ####### YOUR CODE HERE #######
 
         with st.form("Load Data to Chroma"):
             st.subheader("Quiz Builder")
-            st.write("Select PDFs for Ingestion, the topic for the quiz, and click Generate!")
-            
+            st.write(
+                "Select PDFs for Ingestion, the topic for the quiz, and click Generate!"
+            )
+
             ####### YOUR CODE HERE #######
             # 4) Use streamlit widgets to capture the user's input
             # 4) for the quiz topic and the desired number of questions
+            topic_input = st.text_input(
+                "Topic for Generative Quiz", "Enter the topic of the document"
+            )
+            number_of_questions = st.slider("Number of Questions", 1, 10, 1)
             ####### YOUR CODE HERE #######
-            
+
             document = None
-            
+
             submitted = st.form_submit_button("Generate a Quiz!")
             if submitted:
                 ####### YOUR CODE HERE #######
                 # 5) Use the create_chroma_collection() method to create a Chroma collection from the processed documents
+                chroma_creator.create_chroma_collection()
+
                 ####### YOUR CODE HERE #######
-                    
+
                 # Uncomment the following lines to test the query_chroma_collection() method
-                # document = chroma_creator.query_chroma_collection(topic_input) 
-                
+                document = chroma_creator.query_chroma_collection(topic_input)
+                # print(document)
     if document:
-        screen.empty() # Screen 2
+        if (
+            screen
+        ):  # Check if the screen variable is already used and clear it once before updating.
+            screen.empty()
         with st.container():
-            st.header("Query Chroma for Topic, top Document: ")
-            st.write(document)
+            st.write("Query Chroma for Topic")
+            st.header(f"'{topic_input}'")
+            st.write("Top Document:")
+            st.write(document[0].page_content)
+            # st.write(document[0].page_number)
+            st.write("similarity score: ", document[1])

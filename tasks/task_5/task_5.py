@@ -59,20 +59,20 @@ class ChromaCollectionCreator:
         if len(self.processor.pages) == 0:
             st.error("No documents found!", icon="🚨")
             return
-
         # Step 2: Split documents into text chunks
         # Use a TextSplitter from Langchain to split the documents into smaller text chunks
         # https://python.langchain.com/docs/modules/data_connection/document_transformers/character_text_splitter
         # [Your code here for splitting documents]
         text_splitter = CharacterTextSplitter(
             separator="\n\n",
-            chunk_size=1000,
-            chunk_overlap=200,
+            chunk_size=1500,
+            chunk_overlap=150,
             length_function=len,
             is_separator_regex=False,
         )
-        texts = text_splitter.create_documents([processor.pages[0].page_content])
-        print(texts)
+        # print(self.processor.pages[0].page_content)
+        texts = text_splitter.split_documents(self.processor.pages)
+        # print(texts)
         if texts is not None:
             st.success(
                 f"Successfully split pages to {len(texts)} documents!", icon="✅"
